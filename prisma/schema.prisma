@@ -26,4 +26,137 @@ model User {
   isActive             Boolean   @default(true)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  shops                Shop[]
+}
+
+model Shop {
+  id          String       @id @default(uuid())
+  name        String       @db.VarChar(100)
+  address     String       @db.Text
+  gstNumber   String?      @db.VarChar(15)
+  logo        String?      @db.Text
+  ownerId     String       @unique
+  owner       User         @relation(fields: [ownerId], references: [id])
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  categories  Category[]
+  collections Collection[]
+  products    Product[]
+}
+
+model Category {
+  id          String       @id @default(uuid())
+  name        String       @db.VarChar(100)
+  description String?      @db.Text
+  image       String?      @db.Text
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  shopId      String
+  shop        Shop         @relation(fields: [shopId], references: [id])
+  collection  Collection[]
+  products    Product[]
+}
+
+model Collection {
+  id          String    @id @default(uuid())
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  image       String?   @db.Text
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  products    Product[]
+  shopId      String
+  shop        Shop      @relation(fields: [shopId], references: [id])
+}
+
+model Product {
+  id               String             @id @default(uuid())
+  name             String             @db.VarChar(100)
+  description      String?            @db.Text
+  price            Decimal            @db.Decimal(10, 2)
+  masterImage      String             @db.Text
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  collectionId     String
+  collection       Collection         @relation(fields: [collectionId], references: [id])
+  categoryId       String
+  category         Category           @relation(fields: [categoryId], references: [id])
+  shopId           String
+  shop             Shop               @relation(fields: [shopId], references: [id])
+  images           ProductImage[]
+  features         ProductFeature[]
+  inventoryDetails InventoryDetails[]
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  url       String   @db.Text
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductFeature {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  value     String   @db.Text
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InventoryDetails {
+  id                 String                 @id @default(uuid())
+  productId          String                 @unique
+  product            Product                @relation(fields: [productId], references: [id])
+  totalStock         Int                    @default(0)
+  minStock           Int                    @default(0)
+  maxStock           Int                    @default(1000)
+  isActive           Boolean                @default(true)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  transactions       InventoryTransaction[]
+  inventoryAvailable InventoryAvailable?
+}
+
+model InventoryTransaction {
+  id          String           @id @default(uuid())
+  quantity    Int
+  type        TransactionType
+  notes       String?          @db.Text
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  inventoryId String
+  inventory   InventoryDetails @relation(fields: [inventoryId], references: [id])
+}
+
+model InventoryAvailable {
+  id          String           @id @default(uuid())
+  ordered     Int              @default(0)
+  available   Int              @default(0)
+  damaged     Int              @default(0)
+  returned    Int              @default(0)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  inventoryId String           @unique
+  inventory   InventoryDetails @relation(fields: [inventoryId], references: [id])
+}
+
+enum TransactionType {
+  STOCK_ADD
+  STOCK_REMOVE
+  DAMAGE
+  ADJUSTMENT
 }
