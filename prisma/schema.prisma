@@ -27,6 +27,8 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   shops                Shop[]
+
+  @@map("User")
 }
 
 model Shop {
@@ -43,6 +45,8 @@ model Shop {
   categories  Category[]
   collections Collection[]
   products    Product[]
+
+  @@map("Shop")
 }
 
 model Category {
@@ -57,6 +61,8 @@ model Category {
   shop        Shop         @relation(fields: [shopId], references: [id])
   collection  Collection[]
   products    Product[]
+
+  @@map("Category")
 }
 
 model Collection {
@@ -72,6 +78,8 @@ model Collection {
   products    Product[]
   shopId      String
   shop        Shop      @relation(fields: [shopId], references: [id])
+
+  @@map("Collection")
 }
 
 model Product {
@@ -92,6 +100,8 @@ model Product {
   images           ProductImage[]
   features         ProductFeature[]
   inventoryDetails InventoryDetails[]
+
+  @@map("Product")
 }
 
 model ProductImage {
@@ -102,6 +112,8 @@ model ProductImage {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("ProductImage")
 }
 
 model ProductFeature {
@@ -113,6 +125,8 @@ model ProductFeature {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("ProductFeature")
 }
 
 model InventoryDetails {
@@ -127,6 +141,8 @@ model InventoryDetails {
   updatedAt          DateTime               @updatedAt
   transactions       InventoryTransaction[]
   inventoryAvailable InventoryAvailable?
+
+  @@map("InventoryDetails")
 }
 
 model InventoryTransaction {
@@ -139,6 +155,8 @@ model InventoryTransaction {
   updatedAt   DateTime         @updatedAt
   inventoryId String
   inventory   InventoryDetails @relation(fields: [inventoryId], references: [id])
+
+  @@map("InventoryTransaction")
 }
 
 model InventoryAvailable {
@@ -152,6 +170,8 @@ model InventoryAvailable {
   updatedAt   DateTime         @updatedAt
   inventoryId String           @unique
   inventory   InventoryDetails @relation(fields: [inventoryId], references: [id])
+
+  @@map("InventoryAvailable")
 }
 
 enum TransactionType {
