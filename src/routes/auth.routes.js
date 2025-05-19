@@ -1,7 +1,7 @@
-import express from 'express';
-const router = express.Router();
+import { Router } from 'express';
+const router = Router();
 import { signup, login, logout, verifyEmail, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
-import { validateSignup, validateLogin } from '../middlewares/validation.js';
+import { validateSignup, validateLogin } from '../validators/user.validator.js';
 
 router.post('/signup', validateSignup, signup);
 router.post('/login', validateLogin, login);

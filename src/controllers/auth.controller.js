@@ -1,18 +1,20 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { generateToken } from '../utils/token.js';
 import { sendEmail } from '../utils/email.js';
-
-const prisma = new PrismaClient();
+import {
+    getUserByEmailService,
+    createUserService,
+    getUserByVerificationTokenService,
+    setResetPasswordTokenService,
+    updateUserPasswordService,
+    verifyEmailService
+} from '../services/user.service.js';
 
 export const signup = async (req, res) => {
     try {
         const { name, email, password, phone } = req.body;
 
-        const existingUser = await prisma.user.findUnique({
-            where: { email }
-        });
+        const existingUser = await getUserByEmailService(email);
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });
         }
@@ -22,14 +24,12 @@ export const signup = async (req, res) => {
 
         const verificationToken = generateToken();
 
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword,
-                phone,
-                verificationToken
-            }
+        const user = await createUserService({
+            name,
+            email,
+            password: hashedPassword,
+            phone,
+            verificationToken
         });
 
         await sendEmail({
@@ -55,9 +55,7 @@ export const login = async (req, res) => {
         const { email, password } = req.body;
 
         // Find user
-        const user = await prisma.user.findUnique({
-            where: { email }
-        });
+        const user = await getUserByEmailService(email);
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -108,20 +106,12 @@ export const verifyEmail = async (req, res) => {
     try {
         const { token } = req.params;
 
-        const user = await prisma.user.findFirst({
-            where: { verificationToken: token }
-        });
+        const user = await getUserByVerificationTokenService(token);
         if (!user) {
             return res.status(400).json({ message: 'Invalid verification token' });
         }
 
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                verified: true,
-                verificationToken: null
-            }
-        });
+        await verifyEmailService(user.id);
 
         res.status(200).json({ message: 'Email verified successfully' });
 
@@ -135,21 +125,13 @@ export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
-        const user = await prisma.user.findUnique({
-            where: { email }
-        });
+        const user = await getUserByEmailService(email);
         if (!user) {
             return res.status(400).json({ message: 'User not found' });
         }
 
         const resetToken = generateToken(user.id, '1h');
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                resetPasswordToken: resetToken,
-                resetPasswordExpires: new Date(Date.now() + 1 * 60 * 60 * 1000) // 1 hour
-            }
-        });
+        await setResetPasswordTokenService(user.id, resetToken);
 
         await sendEmail({
             to: email,
@@ -174,14 +156,7 @@ export const resetPassword = async (req, res) => {
         const { token } = req.params;
         const { password } = req.body;
 
-        const user = await prisma.user.findFirst({
-            where: {
-                resetPasswordToken: token,
-                resetPasswordExpires: {
-                    gt: new Date()
-                }
-            }
-        });
+        const user = await getUserByResetPasswordTokenService(token);
 
         if (!user) {
             return res.status(400).json({
@@ -193,14 +168,7 @@ export const resetPassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                password: hashedPassword,
-                resetPasswordToken: null,
-                resetPasswordExpires: null
-            }
-        });
+        await updateUserPasswordService(user.id, hashedPassword);
 
         res.status(200).json({ message: 'Password reset successful' });
 
