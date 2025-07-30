@@ -5,7 +5,7 @@ import {
   getOrderById,
   createOrder,
   updateOrder,
-  getOrderInvoices
+  // getOrderInvoices
 } from '../controllers/order.controller.js';
 import { validateCreate } from '../validators/order.validator.js';
 
@@ -21,6 +21,6 @@ router.post('/', validateCreate, createOrder);
 router.put('/:orderId', validateCreate, updateOrder);
 
 // Invoice routes
-router.get('/:orderId/invoices', getOrderInvoices);
+// router.get('/:orderId/invoices', getOrderInvoices);
 
 export default router; 
